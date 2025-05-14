@@ -1,0 +1,123 @@
+-- Drop database if it exists
+DROP DATABASE IF EXISTS buko_ni_juan;
+
+-- Create database
+CREATE DATABASE IF NOT EXISTS buko_ni_juan;
+USE buko_ni_juan;
+
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    role ENUM('admin', 'employee') NOT NULL DEFAULT 'employee',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default admin user
+INSERT INTO users (username, password, email, full_name, role)
+VALUES ('admin', 'admin123', 'admin@bukoni.juan', 'Administrator', 'admin'),
+       ('employee', 'employee123', 'employee@bukoni.juan', 'Regular Employee', 'employee');
+
+-- Create products table
+CREATE TABLE IF NOT EXISTS products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    size VARCHAR(20) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    reorder_level INT NOT NULL DEFAULT 10,
+    type VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insert updated products based on the menu
+INSERT INTO products (name, category, size, price, stock, reorder_level, type) VALUES
+-- BUKO JUICE - Cups
+('BUKO JUICE', 'BUKO JUICE', '12oz', 55.00, 100, 25, 'cup'),
+('BUKO JUICE', 'BUKO JUICE', '16oz', 65.00, 90, 20, 'cup'),
+('BUKO JUICE', 'BUKO JUICE', '22oz', 90.00, 75, 15, 'cup'),
+-- BUKO JUICE - Bottles
+('BUKO JUICE', 'BUKO JUICE', 'SMALL', 60.00, 80, 20, 'bottle'),
+('BUKO JUICE', 'BUKO JUICE', 'MEDIUM', 75.00, 65, 15, 'bottle'),
+('BUKO JUICE', 'BUKO JUICE', 'LARGE', 120.00, 50, 10, 'bottle'),
+-- BUKO SHAKE - Cups
+('BUKO SHAKE', 'BUKO SHAKE', '12oz', 65.00, 85, 20, 'cup'),
+('BUKO SHAKE', 'BUKO SHAKE', '16oz', 85.00, 75, 18, 'cup'),
+('BUKO SHAKE', 'BUKO SHAKE', '22oz', 125.00, 60, 12, 'cup'),
+-- BUKO SHAKE - Bottles
+('BUKO SHAKE', 'BUKO SHAKE', 'SMALL', 70.00, 70, 15, 'bottle'),
+('BUKO SHAKE', 'BUKO SHAKE', 'MEDIUM', 90.00, 55, 12, 'bottle'),
+('BUKO SHAKE', 'BUKO SHAKE', 'LARGE', 155.00, 40, 8, 'bottle');
+
+-- Create sales table for reporting
+CREATE TABLE IF NOT EXISTS sales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    total DECIMAL(10, 2) NOT NULL,
+    sale_date DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+-- Create transactions table for POS
+CREATE TABLE IF NOT EXISTS transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    customer_name VARCHAR(100),
+    customer_phone VARCHAR(20),
+    customer_email VARCHAR(100),
+    payment_method ENUM('cash', 'card', 'gcash') NOT NULL DEFAULT 'cash',
+    total_amount DECIMAL(10, 2) NOT NULL,
+    transaction_date DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Create transaction_items table to store items in each transaction
+CREATE TABLE IF NOT EXISTS transaction_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    transaction_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    subtotal DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+-- Insert sample sales data (for demonstration)
+INSERT INTO sales (product_id, quantity, total, sale_date) VALUES
+(1, 5, 275.00, '2025-04-05 09:15:00'),
+(4, 3, 180.00, '2025-04-05 10:30:00'),
+(7, 2, 130.00, '2025-04-05 11:45:00'),
+(10, 1, 70.00, '2025-04-05 13:20:00'),
+(2, 4, 260.00, '2025-04-04 09:30:00'),
+(5, 2, 150.00, '2025-04-04 10:45:00'),
+(8, 3, 255.00, '2025-04-04 12:15:00'),
+(11, 1, 90.00, '2025-04-04 14:30:00');
+
+-- Create a sample transaction
+INSERT INTO transactions (user_id, customer_name, customer_phone, payment_method, total_amount, transaction_date)
+VALUES (1, 'John Doe', '09123456789', 'cash', 305.00, '2025-04-05 09:15:00');
+
+-- Add items to the sample transaction
+INSERT INTO transaction_items (transaction_id, product_id, quantity, price, subtotal)
+VALUES 
+(1, 1, 5, 55.00, 275.00),
+(1, 4, 1, 30.00, 30.00);
+
+-- Update the products stock to reflect the sample sales
+UPDATE products SET stock = stock - 5 WHERE id = 1;
+UPDATE products SET stock = stock - 3 WHERE id = 4;
+UPDATE products SET stock = stock - 2 WHERE id = 7;
+UPDATE products SET stock = stock - 1 WHERE id = 10;
+UPDATE products SET stock = stock - 4 WHERE id = 2;
+UPDATE products SET stock = stock - 2 WHERE id = 5;
+UPDATE products SET stock = stock - 3 WHERE id = 8;
+UPDATE products SET stock = stock - 1 WHERE id = 11;
