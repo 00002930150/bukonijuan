@@ -2,7 +2,11 @@
   "name": "dbms-buko-juan",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/dbms-buko-juan",
+  "homepage": "https://00002930150.github.io/dbms-buko-juan",
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+}
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
